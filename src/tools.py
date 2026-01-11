@@ -1,45 +1,74 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
+import pandas as pd
 
-def plot_counts(df, coluna, titulo=None, palette='viridis'):
-    """
-    Gera um gráfico de barras simples para contagem de valores de uma coluna.
-    """
-    plt.figure(figsize=(12, 6))
+
+def plot_count_col(path, x_, y_):
     
-    # 1. Preparar os dados
-    df_plot = df[coluna].value_counts().reset_index()
-    df_plot.columns = [coluna, 'contagem']
+    df_ = pd.read_csv(path)
     
-    # 2. Criar o plot (sem os avisos de palette/hue)
-    ax = sns.barplot(
+    sns.barplot(
+        data=df_, 
+        x=x_, 
+        y=y_, 
+        palette='Blues_r', 
+        hue=y_, 
+        legend=False               
+    )
+
+def analise_mortos_semana():
+    
+    tmns = pd.read_csv("./query-results/Tabela Mortos na Semana por Fase do Dia.csv")
+
+    ordem_dias = ['SEGUNDA-FEIRA', 'TERCA-FEIRA', 'QUARTA-FEIRA', 'QUINTA-FEIRA', 'SEXTA-FEIRA', 'SABADO', 'DOMINGO']
+    
+    tmns['dia_semana'] = pd.Categorical(tmns['dia_semana'], categories=ordem_dias, ordered=True)
+    
+    df_plot = tmns.groupby(['dia_semana', 'fase_dia'], observed=False)['total_mortos'].sum().fillna(0).reset_index()
+    
+    plt.figure(figsize=(14, 6))
+    sns.lineplot(
         data=df_plot, 
-        x=coluna, 
-        y='contagem', 
-        hue=coluna, 
-        palette=palette, 
-        legend=False
+        x='dia_semana', 
+        y='total_mortos', 
+        hue='fase_dia', 
+        marker='o',      
+        linewidth=3,     
+        errorbar=None    
     )
     
-    # 3. Estética do gráfico
-    if titulo:
-        plt.title(titulo, fontsize=16, fontweight='bold', pad=15)
-    else:
-        plt.title(f'Distribuição por {coluna.replace("_", " ").title()}', fontsize=14)
-        
+    plt.title('A Curva do Risco: Evolução Semanal de Óbitos por Turno', fontsize=16, fontweight='bold')
+    plt.ylabel('Total de Mortos')
+    plt.xlabel('Dia da Semana')
+    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.legend(title='Fase do Dia', bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.xticks(rotation=45)
-    plt.xlabel('')
-    plt.ylabel('Quantidade')
-    
-    # Adiciona os números em cima das barras para facilitar a leitura
-    for p in ax.patches:
-        ax.annotate(f'{int(p.get_height()):,d}'.replace(',', '.'), 
-                    (p.get_x() + p.get_width() / 2., p.get_height()), 
-                    ha = 'center', va = 'center', 
-                    xytext = (0, 9), 
-                    textcoords = 'offset points',
-                    fontsize=10, fontweight='bold')
-
-    sns.despine() # Remove as bordas desnecessárias
     plt.tight_layout()
+    
+    plt.show()
+
+def analise_mortos_genero():
+    tmsg = pd.read_csv("./query-results/Tabela Mortos na Semana por Genero.csv")
+
+    ordem_dias = ['SEGUNDA-FEIRA', 'TERCA-FEIRA', 'QUARTA-FEIRA', 'QUINTA-FEIRA', 'SEXTA-FEIRA', 'SABADO', 'DOMINGO']
+    
+    plt.figure(figsize=(12, 6))
+    
+    sns.lineplot(
+        data=tmsg, 
+        x='dia_semana', 
+        y='total_mortos', 
+        hue='genero', 
+        marker='o',
+        palette=['#3498db', '#e74c3c'],
+        linewidth=3
+    )
+    
+    plt.xticks(ticks=range(len(ordem_dias)), labels=ordem_dias, rotation=45)
+    plt.title('Evolução Semanal de Óbitos: Masculino vs Feminino', fontsize=14, fontweight='bold')
+    plt.ylabel('Total de Mortos')
+    plt.xlabel('Dia da Semana')
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    
     plt.show()
